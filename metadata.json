@@ -1,0 +1,6 @@
+{
+  "name": "Screen Scape",
+  "description": "Production-quality immersive 3D virtual movie theater booking simulator showcasing the ultimate cinema-going preview experience.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
