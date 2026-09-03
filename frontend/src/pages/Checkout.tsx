@@ -51,11 +51,24 @@ export const Checkout: React.FC = () => {
       } else {
         // If retrying an existing order and we have a valid failure/overdue code
         if (intervention && (intervention.interventionType === 'PAYMENT_FAILURE_RECOVERY' || intervention.interventionType === 'OVERDUE_RECEIVABLE_REMINDER')) {
-          const discountRes = await api.post(`/orders/${currentOrderId}/apply-discount`, {
-            discountCode: intervention.discountCode
-          });
-          setOrderAmount(discountRes.data.totalAmount);
+          try {
+            const discountRes = await api.post(`/orders/${currentOrderId}/apply-discount`, {
+              discountCode: intervention.discountCode
+            });
+            if (discountRes.data) {
+              setOrderAmount(discountRes.data.totalAmount);
+              if (discountRes.data.razorpayOrderId) {
+                currentRazorpayOrderId = discountRes.data.razorpayOrderId;
+              }
+            }
+          } catch (discountErr) {
+            console.warn('Discount already applied or processed:', discountErr);
+          }
         }
+      }
+
+      if (!currentRazorpayOrderId) {
+        currentRazorpayOrderId = 'order_MOCK_' + (currentOrderId || Date.now());
       }
 
       // 2. Fake network processing delay
@@ -65,10 +78,10 @@ export const Checkout: React.FC = () => {
       if (simulateSuccess) {
         await api.post('/payments/verify', {
           razorpayOrderId: currentRazorpayOrderId,
-          razorpayPaymentId: 'pay_MOCK' + Date.now(),
+          razorpayPaymentId: 'pay_MOCK_' + Date.now(),
           razorpaySignature: 'mock_signature'
         });
-        alert('Payment Successful!');
+        alert('Payment Successful! Order has been successfully paid.');
       } else {
         await api.post('/payments/fail', {
           razorpayOrderId: currentRazorpayOrderId,
@@ -79,9 +92,10 @@ export const Checkout: React.FC = () => {
       }
 
       navigate('/orders');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment processing failed', error);
-      alert('Checkout failed. Please try again.');
+      const errMsg = error.response?.data?.message || 'Checkout failed. Please try again.';
+      alert(errMsg);
     } finally {
       setLoading(false);
     }

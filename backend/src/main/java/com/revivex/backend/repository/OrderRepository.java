@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
     Optional<Order> findByRazorpayOrderId(String razorpayOrderId);
+    Optional<Order> findFirstByOrderByCreatedAtDesc();
 }

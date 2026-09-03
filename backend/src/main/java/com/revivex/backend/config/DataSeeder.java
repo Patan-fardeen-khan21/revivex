@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
@@ -23,9 +25,28 @@ public class DataSeeder implements CommandLineRunner {
     private final ProductRepository productRepository;
     private final InterventionLogRepository logRepository;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
+        if (!userRepository.existsByEmail("fardeenkhanpatan5@gmail.com")) {
+            userRepository.save(User.builder()
+                    .name("Fardeen Khan")
+                    .email("fardeenkhanpatan5@gmail.com")
+                    .password(passwordEncoder.encode("password"))
+                    .role(Role.ADMIN)
+                    .build());
+        }
+
+        if (!userRepository.existsByEmail("admin@revivex.com")) {
+            userRepository.save(User.builder()
+                    .name("Admin User")
+                    .email("admin@revivex.com")
+                    .password(passwordEncoder.encode("admin123"))
+                    .role(Role.ADMIN)
+                    .build());
+        }
+
         if (productRepository.count() == 0) {
             Product p1 = Product.builder()
                     .name("Premium Wireless Headphones")

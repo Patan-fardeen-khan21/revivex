@@ -31,17 +31,17 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getUserOrders(authentication.getName()));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<OrderDto> getOrderById(Authentication authentication, @PathVariable Long id) {
-        return ResponseEntity.ok(orderService.getOrderById(authentication.getName(), id));
-    }
-
     @GetMapping("/intervention")
     public ResponseEntity<InterventionLog> getPendingIntervention(Authentication authentication) {
         com.revivex.backend.entity.User user = userRepository.findByEmail(authentication.getName()).orElseThrow();
         return interventionLogRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(user.getId(), "PENDING")
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderDto> getOrderById(Authentication authentication, @PathVariable Long id) {
+        return ResponseEntity.ok(orderService.getOrderById(authentication.getName(), id));
     }
 
     @PostMapping("/{id}/apply-discount")

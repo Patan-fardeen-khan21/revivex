@@ -26,8 +26,14 @@ public class PaymentService {
 
     @Transactional
     public boolean verifyPayment(PaymentVerifyRequest request) {
-        Order order = orderRepository.findByRazorpayOrderId(request.getRazorpayOrderId())
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = null;
+        if (request.getRazorpayOrderId() != null && !request.getRazorpayOrderId().isBlank()) {
+            order = orderRepository.findByRazorpayOrderId(request.getRazorpayOrderId()).orElse(null);
+        }
+        if (order == null) {
+            order = orderRepository.findFirstByOrderByCreatedAtDesc()
+                    .orElseThrow(() -> new RuntimeException("Order not found"));
+        }
 
         try {
             boolean isValid = true; // Mocked for hackathon
@@ -36,13 +42,15 @@ public class PaymentService {
                 order.setStatus(OrderStatus.PAID);
                 orderRepository.save(order);
 
-                Payment payment = Payment.builder()
-                        .order(order)
-                        .status(PaymentStatus.SUCCESS)
-                        .razorpayPaymentId(request.getRazorpayPaymentId())
-                        .razorpaySignature(request.getRazorpaySignature())
-                        .amount(order.getTotalAmount())
-                        .build();
+                Payment payment = paymentRepository.findByOrderId(order.getId()).orElse(null);
+                if (payment == null) {
+                    payment = Payment.builder().order(order).build();
+                }
+
+                payment.setStatus(PaymentStatus.SUCCESS);
+                payment.setRazorpayPaymentId(request.getRazorpayPaymentId());
+                payment.setRazorpaySignature(request.getRazorpaySignature());
+                payment.setAmount(order.getTotalAmount());
                 paymentRepository.save(payment);
                 return true;
             } else {
@@ -55,19 +63,27 @@ public class PaymentService {
 
     @Transactional
     public boolean failPayment(PaymentVerifyRequest request) {
-        Order order = orderRepository.findByRazorpayOrderId(request.getRazorpayOrderId())
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = null;
+        if (request.getRazorpayOrderId() != null && !request.getRazorpayOrderId().isBlank()) {
+            order = orderRepository.findByRazorpayOrderId(request.getRazorpayOrderId()).orElse(null);
+        }
+        if (order == null) {
+            order = orderRepository.findFirstByOrderByCreatedAtDesc()
+                    .orElseThrow(() -> new RuntimeException("Order not found"));
+        }
 
         order.setStatus(OrderStatus.FAILED);
         orderRepository.save(order);
 
-        Payment payment = Payment.builder()
-                .order(order)
-                .status(PaymentStatus.FAILED)
-                .razorpayPaymentId(request.getRazorpayPaymentId())
-                .razorpaySignature(request.getRazorpaySignature())
-                .amount(order.getTotalAmount())
-                .build();
+        Payment payment = paymentRepository.findByOrderId(order.getId()).orElse(null);
+        if (payment == null) {
+            payment = Payment.builder().order(order).build();
+        }
+
+        payment.setStatus(PaymentStatus.FAILED);
+        payment.setRazorpayPaymentId(request.getRazorpayPaymentId());
+        payment.setRazorpaySignature(request.getRazorpaySignature());
+        payment.setAmount(order.getTotalAmount());
         paymentRepository.save(payment);
         return true;
     }

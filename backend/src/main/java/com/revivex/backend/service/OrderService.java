@@ -109,7 +109,7 @@ public class OrderService {
         java.util.Optional<InterventionLog> logOpt = interventionLogRepository
             .findFirstByUserIdAndStatusOrderByCreatedAtDesc(user.getId(), "PENDING");
             
-        if (logOpt.isPresent() && logOpt.get().getDiscountCode().equals(discountCode)) {
+        if (logOpt.isPresent() && (discountCode == null || discountCode.isBlank() || logOpt.get().getDiscountCode().equalsIgnoreCase(discountCode.trim()))) {
             InterventionLog log = logOpt.get();
             
             BigDecimal discountPercentage = BigDecimal.ZERO;
